@@ -33,11 +33,13 @@ async def upload(file: UploadFile = File(...)):
         document_id = str(uuid.uuid4())
         DOCUMENT_STORE[document_id] = {
             "document_id": document_id,
-            "text": result['text'],
-            "chunks": result['chunks'],
             "content_type": file.content_type,
             "filename": file.filename,
-            "saved_path": file_path
+            "saved_path": file_path,
+            "text": result['text'],
+            "chunks": result['chunks'],
+            "embedding": result['embedding'],
+            "faiss_index": result['faiss_index']
             }
 
         
@@ -48,7 +50,8 @@ async def upload(file: UploadFile = File(...)):
                 "SavedPath": file_path,
                 "TextLength": len(result['text']),
                 "TextPreview": result['text'][:1000],
-                "ChunksPreview": result['chunks'][:3]}
+                "ChunksPreview": result['chunks'][:3]
+                }
     except HTTPException:
         raise
     except Exception as e:
@@ -66,17 +69,18 @@ async def ask_llm(document_id:str, question:str):
         if document is None:
             raise HTTPException(status_code=404, detail="Document not found")
         text = document['text']
-        chunks = document['chunks']
+
         if not text:
             raise HTTPException(status_code = 400, detail="Canot Find the Document")
         if not question.strip():
             raise HTTPException(status_code=400, detail="Question cannot be empty")
         
-        response = orchestrator.run(question, chunks)
+        response = orchestrator.run(question, document_id)
 
         return {
             "Message" : "Successfully Generated a Response",
-            "Response" : response,
+            "Response" : response['response'],
+            "Top Chunks" : response['top_chunks']
         }
     except Exception as e:
         traceback.print_exc()

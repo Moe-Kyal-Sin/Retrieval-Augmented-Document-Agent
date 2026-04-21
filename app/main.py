@@ -5,7 +5,7 @@ import traceback
 from fastapi import FastAPI
 
 from app.core.config import UPLOAD_DIR
-from app.core.config import DOCUMENT_STORE
+from app.core.store import DOCUMENT_STORE
 from app.routers.document import router as document_router
 
 from app.services.ingestion import IngestionAgent
